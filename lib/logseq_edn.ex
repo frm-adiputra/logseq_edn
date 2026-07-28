@@ -35,6 +35,9 @@ defmodule LogseqEdn do
     end
   end
 
+  @doc """
+  Get all blocks that extend the given block number.
+  """
   def extension_of(blocks, block_num) do
     Enum.filter(blocks, fn {_, v} ->
       if Map.has_key?(v, :"logseq.property.class/extends") do
@@ -46,11 +49,17 @@ defmodule LogseqEdn do
     |> Enum.map(fn {_, v} -> v end)
   end
 
+  @doc """
+  Get all tags.
+  """
   def tag_blocks(blocks) do
     root_tag_block = LogseqEdn.root_tag(blocks)
     LogseqEdn.extension_of(blocks, root_tag_block.block_num)
   end
 
+  @doc """
+  Get all blocks that are tagged with the given tags. Raises an error if any of the tags are not found in the available tags.
+  """
   def tagged_with!(blocks, tags) do
     available_tags = tag_blocks(blocks)
 
@@ -79,6 +88,9 @@ defmodule LogseqEdn do
     |> Enum.map(fn {_, v} -> v end)
   end
 
+  @doc """
+  Build a tree structure from the given block list.
+  """
   def tree(blocks, block_list) when is_list(block_list) do
     Enum.map(block_list, fn block -> do_tree(blocks, block) end)
   end
@@ -102,6 +114,9 @@ defmodule LogseqEdn do
     end
   end
 
+  @doc """
+  Convert the given tree structure to a markdown string.
+  """
   def to_markdown(tree, level \\ 0) do
     Enum.map(tree, fn block -> do_to_markdown(block, level) end)
     |> Enum.join("\n")
