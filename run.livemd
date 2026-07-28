@@ -35,14 +35,33 @@ LogseqEdn.to_markdown(tree)
 ```
 
 ```elixir
-blocks[283]
-```
+domains = LogseqEdn.tagged_with!(blocks, ["Domain", "MyPay"])
+entities = LogseqEdn.tagged_with!(blocks, ["Entity", "MyPay"])
+terms = LogseqEdn.tagged_with!(blocks, ["Term", "MyPay"])
 
-```elixir
+domains_md = 
+  LogseqEdn.tree(blocks, domains)
+  |> LogseqEdn.to_markdown()
+
+entities_md = 
+  LogseqEdn.tree(blocks, entities)
+  |> LogseqEdn.to_markdown()
+
+terms_md = 
+  LogseqEdn.tree(blocks, terms)
+  |> LogseqEdn.to_markdown()
+
 Kino.Markdown.new("""
-- sasa
-  sasa
+## Terms
 
-  sasa
+#{terms_md}
+
+## Domains
+
+#{domains_md}
+
+## Entities
+
+#{entities_md}
 """)
 ```
