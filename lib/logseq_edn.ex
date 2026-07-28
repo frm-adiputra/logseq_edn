@@ -2,7 +2,7 @@ defmodule LogseqEdn do
   @moduledoc """
   Documentation for `LogseqEdn`.
 
-  For more information about the Logseq database query, please refer to the official documentation:
+  For more information about the Logseq attributes, please refer to the official documentation:
   https://github.com/logseq/logseq/blob/4975d5c21398d6173a2ef4444cb0f7c44817000e/libs/guides/db_query_guide.md?plain=1#L130
   """
 
