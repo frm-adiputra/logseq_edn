@@ -10,7 +10,8 @@ defmodule LogseqEdn do
     :"block/refs",
     :"block/tags",
     :"logseq.property.class/extends",
-    :"logseq.property.class/properties"
+    :"logseq.property.class/properties",
+    :"logseq.property/closed-values"
   ]
 
   @doc """
@@ -24,6 +25,98 @@ defmodule LogseqEdn do
     edn.datoms
     |> Enum.group_by(&Enum.at(&1, 0))
     |> Enum.map(&parse_block/1)
+    |> Enum.reduce(%{}, fn x, acc -> Map.put(acc, x.block_num, x) end)
+  end
+
+  def root_tag(blocks) do
+    case Enum.find(blocks, fn {_, v} -> v[:"block/name"] == "root tag" end) do
+      {_block_num, block} -> block
+      nil -> nil
+    end
+  end
+
+  def extension_of(blocks, block_num) do
+    Enum.filter(blocks, fn {_, v} ->
+      if Map.has_key?(v, :"logseq.property.class/extends") do
+        block_num in v[:"logseq.property.class/extends"]
+      else
+        false
+      end
+    end)
+    |> Enum.map(fn {_, v} -> v end)
+  end
+
+  def tag_blocks(blocks) do
+    root_tag_block = LogseqEdn.root_tag(blocks)
+    LogseqEdn.extension_of(blocks, root_tag_block.block_num)
+  end
+
+  def tagged_with!(blocks, tags) do
+    available_tags = tag_blocks(blocks)
+
+    available_tags_title_set =
+      Enum.map(available_tags, fn v -> v[:"block/title"] end) |> MapSet.new()
+
+    tags_set = MapSet.new(tags)
+    diff = MapSet.difference(tags_set, available_tags_title_set)
+
+    if MapSet.size(diff) > 0 do
+      raise "Tags #{inspect(diff)} not found in available tags"
+    end
+
+    tag_nums =
+      Enum.filter(available_tags, fn v -> v[:"block/title"] in tags end)
+      |> Enum.map(fn x -> x.block_num end)
+      |> MapSet.new()
+
+    Enum.filter(blocks, fn {_, v} ->
+      if Map.has_key?(v, :"block/tags") do
+        MapSet.subset?(tag_nums, MapSet.new(v[:"block/tags"]))
+      else
+        false
+      end
+    end)
+    |> Enum.map(fn {_, v} -> v end)
+  end
+
+  def tree(blocks, block_list) when is_list(block_list) do
+    Enum.map(block_list, fn block -> do_tree(blocks, block) end)
+  end
+
+  defp do_tree(blocks, block) do
+    children =
+      Enum.filter(blocks, fn {_, v} ->
+        if Map.has_key?(v, :"block/parent") do
+          v[:"block/parent"] == block.block_num
+        else
+          false
+        end
+      end)
+      |> Enum.map(fn {_, v} -> v end)
+
+    if length(children) > 0 do
+      ch = tree(blocks, children)
+      Map.put(block, :children, ch)
+    else
+      Map.put(block, :children, children)
+    end
+  end
+
+  def to_markdown(tree, level \\ 0) do
+    Enum.map(tree, fn block -> do_to_markdown(block, level) end)
+    |> Enum.join("\n")
+  end
+
+  defp do_to_markdown(block, level) do
+    markdown_text =
+      "#{String.duplicate("  ", level)}- #{Macro.unescape_string(block[:"block/title"]) |> String.replace("\n", "\n" <> String.duplicate("  ", level + 1))}\n"
+
+    if block[:children] == [] do
+      markdown_text
+    else
+      markdown_text_children = to_markdown(block[:children], level + 1)
+      Enum.join([markdown_text, markdown_text_children], "\n")
+    end
   end
 
   defp parse_block({k, v}) do

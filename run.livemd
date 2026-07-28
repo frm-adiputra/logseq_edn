@@ -3,8 +3,46 @@
 ## Section
 
 ```elixir
-edn = 
-  Path.join(:code.priv_dir(:logseq_edn), "logseq_db_UTM Projects_1785147886.edn")
+blocks = 
+  Path.join(:code.priv_dir(:logseq_edn), "logseq_db_UTM Projects_1785234007.edn")
   |> LogseqEdn.parse()
-  |> Enum.reduce(%{}, fn x, acc -> Map.put(acc, x.block_num, x) end)
+```
+
+```elixir
+blocks
+|> Enum.filter(fn {_, v} -> v[:"block/title"] == "Domain" end)
+
+root_tag = LogseqEdn.root_tag(blocks)
+```
+
+```elixir
+tag_blocks = LogseqEdn.tag_blocks(blocks)
+```
+
+```elixir
+LogseqEdn.tagged_with!(blocks, ["Entity", "MyPay"])
+```
+
+```elixir
+tagged = LogseqEdn.tagged_with!(blocks, ["Entity", "MyPay"])
+tree = LogseqEdn.tree(blocks, tagged)
+```
+
+```elixir
+tree = LogseqEdn.tree(blocks, [blocks[283]])
+LogseqEdn.to_markdown(tree)
+|> Kino.Markdown.new()
+```
+
+```elixir
+blocks[283]
+```
+
+```elixir
+Kino.Markdown.new("""
+- sasa
+  sasa
+
+  sasa
+""")
 ```
