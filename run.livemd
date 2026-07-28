@@ -1,0 +1,10 @@
+# Logseq EDN
+
+## Section
+
+```elixir
+edn = 
+  Path.join(:code.priv_dir(:logseq_edn), "logseq_db_UTM Projects_1785147886.edn")
+  |> LogseqEdn.parse()
+  |> Enum.reduce(%{}, fn x, acc -> Map.put(acc, x.block_num, x) end)
+```
